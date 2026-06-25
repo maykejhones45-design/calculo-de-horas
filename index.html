@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Horário</title>
+
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Calculadora de horário de saída do trabalho" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 26px;
+    }
+
+    .campo {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: #22c55e;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #16a34a;
+      transform: scale(1.02);
+    }
+
+    .resultado {
+      margin-top: 25px;
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .obs {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #cbd5e1;
+      text-align: center;
+    }
+
+    .instalar {
+      margin-top: 15px;
+      background: #3b82f6;
+      display: none;
+    }
+
+    .instalar:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Saída</h1>
+
+    <div class="campo">
+      <label for="entrada">Hora de entrada</label>
+      <input type="time" id="entrada" value="09:00">
+    </div>
+
+    <div class="campo">
+      <label for="trabalho">Horas de trabalho</label>
+      <input type="time" id="trabalho" value="08:30">
+    </div>
+
+    <div class="campo">
+      <label for="almoco">Tempo de almoço</label>
+      <input type="time" id="almoco" value="02:30">
+    </div>
+
+    <button onclick="calcularSaida()">Calcular horário de saída</button>
+    <button id="btnInstalar" class="instalar">Instalar App</button>
+
+    <div class="resultado" id="resultado"></div>
+    <div class="obs">Exemplo: entrada 09:00 + trabalho 08:30 + almoço 02:30 = saída 20:00</div>
+  </div>
+
+  <script>
+    function timeToMinutes(time) {
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(totalMinutes) {
+      totalMinutes = totalMinutes % (24 * 60);
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+
+    function calcularSaida() {
+      const entrada = document.getElementById('entrada').value;
+      const trabalho = document.getElementById('trabalho').value;
+      const almoco = document.getElementById('almoco').value;
+      const resultado = document.getElementById('resultado');
+
+      if (!entrada || !trabalho || !almoco) {
+        resultado.style.display = 'block';
+        resultado.innerHTML = 'Preencha todos os campos.';
+        return;
+      }
+
+      const minutosEntrada = timeToMinutes(entrada);
+      const minutosTrabalho = timeToMinutes(trabalho);
+      const minutosAlmoco = timeToMinutes(almoco);
+
+      const totalSaida = minutosEntrada + minutosTrabalho + minutosAlmoco;
+      const horarioSaida = minutesToTime(totalSaida);
+
+      resultado.style.display = 'block';
+      resultado.innerHTML = `Você deve sair às <span style="color:#4ade80">${horarioSaida}</span>`;
+    }
+
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    // Instalação PWA
+    let deferredPrompt;
+    const btnInstalar = document.getElementById('btnInstalar');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstalar.style.display = 'block';
+    });
+
+    btnInstalar.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        btnInstalar.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
